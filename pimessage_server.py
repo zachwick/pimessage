@@ -28,17 +28,18 @@ class chatServer(threading.Thread):
             if not data:
                 break
             
-            if 'name:' in data:
+            if 'name:' in data[:5]:
                 for c in clients:
                     if self.address == c.address:
                         c.name = data[5:].rstrip()
-                        print(c.name)
+                        
             for c in clients:
                 (c_ipaddr, c_port) = self.address
                 if c.name == "":
                     c.socket.send("<" + str(c_ipaddr) + ">: " + data)
                 else:
                     c.socket.send("<" + c.name + ">: " + data)
+
         self.socket.close()
         print '%s:%s disconnected.' % self.address
         lock.acquire()
