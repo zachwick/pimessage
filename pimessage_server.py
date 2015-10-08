@@ -36,9 +36,9 @@ class chatServer(threading.Thread):
             for c in clients:
                 (c_ipaddr, c_port) = self.address
                 if c.name == "":
-                    c.socket.send("<" + str(c_ipaddr) + ">: " + data)
+                    c.socket.send("<" + str(c_ipaddr) + ">: " + data + "\n")
                 else:
-                    c.socket.send("<" + c.name + ">: " + data)
+                    c.socket.send("<" + c.name + ">: " + data + "\n")
 
         self.socket.close()
         print '%s:%s disconnected.' % self.address
