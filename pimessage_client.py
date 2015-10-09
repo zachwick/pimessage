@@ -3,6 +3,8 @@ import socket
 
 from PyQt4.QtGui import QApplication, QTableWidget, QTableWidgetItem
 from PyQt4.QtGui import QGridLayout, QLineEdit, QWidget, QHeaderView, QTextEdit
+from PyQt4.QtGui import QTextCursor
+from PyQt4.QtCore import QThread
 
 # Definition of HostInput class
 # General description of what a 'HostInput' is
@@ -29,7 +31,8 @@ class PortInput(QLineEdit):
     def _return_pressed(self):
         self.client.port = int(self.text())
         print(self.client.port)
-        self.client.connect()
+        self.client.start()
+        #self.client.connect()
         # Use the host and port to connect to the chat server
         
 # Definition of TextBox class
@@ -55,28 +58,50 @@ class TextBox(QLineEdit):
 class ChatBox(QTextEdit):
     def __init__(self):
         super(ChatBox, self).__init__()
+        self.setReadOnly(True)
+        self.setLineWrapMode(QTextEdit.NoWrap)
+        self.setCursorWidth(30)
+        self.scroll = self.verticalScrollBar()
 
-class ChatClient():
+class ChatClient(QThread):
     def __init__(self, chat_box):
+        QThread.__init__(self)
         self.chat_box = chat_box
         self.host = ""
         self.port = 0
         self.msg_text = ""
+        self.connected = False
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
         print("Connecting to "+str(self.host)+":"+str(self.port))
         self.connection.connect((self.host, self.port))
-
+        
     def send_message(self):
         print("Sending message: "+str(self.msg_text))
         self.connection.send(self.msg_text)
-        
-if __name__ == "__main__":
+
+    def run(self):
+        print("in run")
+        if not self.connected:
+            print('need to connect')
+            self.connect()
+        print('connected')
+        while True:
+            data = self.connection.recv(1024)
+            if not data:
+                break
+            print(data)
+            self.chat_box.moveCursor(QTextCursor.End)
+            self.chat_box.insertPlainText(data)
+            self.chat_box.scroll.setValue(self.chat_box.scroll.maximum())
+
+
+if __name__ == "__main__":    
     app = QApplication(sys.argv)
 
     chat_box = ChatBox()
-    client = ChatClient(chat_box)   
+    client = ChatClient(chat_box)
 
     host_input = HostInput(client)
     port_input = PortInput(client)    
